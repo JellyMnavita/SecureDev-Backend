@@ -21,28 +21,20 @@ RUN mkdir -p var public
 # 4. Copy only composer files first (optimize Docker cache)
 COPY composer.json composer.lock symfony.lock ./
 
-# 5. Install runtime component FIRST
-RUN composer require symfony/runtime --no-scripts --no-plugins
-
-# 6. Install other dependencies
+# 5. Install ALL dependencies (including runtime) in one step
 RUN composer install --no-dev --no-scripts --optimize-autoloader
 
-# 7. Copy all application files
+# 6. Copy all application files
 COPY . .
 
-# 8. Set permissions (now directories exist)
+# 7. Set permissions (now directories exist)
 RUN chown -R www-data:www-data var public
 
-# 9. Configure Apache
+# 8. Configure Apache
 RUN a2enmod rewrite
 COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
 
-
-# Install dependencies
-RUN composer install --no-dev --optimize-autoloader
-
-RUN composer require symfony/runtime
-
-# 10. Run necessary Symfony commands
+# 9. Run necessary Symfony commands (as www-data to avoid permission issues)
+USER www-data
 RUN php bin/console cache:clear \
     && php bin/console assets:install public
