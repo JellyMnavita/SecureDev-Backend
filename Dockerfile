@@ -2,7 +2,7 @@ FROM php:8.2-apache
 
 WORKDIR /var/www/html
 
-# Install dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -13,11 +13,17 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy files
+# Copy composer files first (optimize Docker cache)
+COPY composer.json composer.lock ./
+
+# Install PHP dependencies (without scripts)
+RUN composer install --no-dev --no-scripts --optimize-autoloader
+
+# Copy all files
 COPY . .
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+# Now run scripts
+RUN composer run-script post-install-cmd
 
 # Configure Apache
 RUN a2enmod rewrite
