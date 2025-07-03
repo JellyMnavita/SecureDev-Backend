@@ -37,6 +37,12 @@ RUN chown -R www-data:www-data var public
 RUN a2enmod rewrite
 COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
 
+
+# Install dependencies
+RUN composer install --no-dev --optimize-autoloader
+
+RUN composer require symfony/runtime
+
 # 10. Run necessary Symfony commands
 RUN php bin/console cache:clear \
     && php bin/console assets:install public
