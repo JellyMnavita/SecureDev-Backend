@@ -13,17 +13,20 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy composer files first (optimize Docker cache)
+# Copy composer files first
 COPY composer.json composer.lock ./
 
 # Install PHP dependencies (without scripts)
 RUN composer install --no-dev --no-scripts --optimize-autoloader
 
+# Install Symfony Runtime component
+RUN composer require symfony/runtime --no-scripts
+
 # Copy all files
 COPY . .
 
-# Now run scripts
-RUN composer run-script post-install-cmd
+# Run post-install scripts with proper environment
+RUN COMPOSER_ALLOW_SUPERUSER=1 composer run-script post-install-cmd
 
 # Configure Apache
 RUN a2enmod rewrite
