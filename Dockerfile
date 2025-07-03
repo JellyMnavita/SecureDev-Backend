@@ -26,7 +26,7 @@ RUN composer require symfony/runtime --no-scripts
 COPY . .
 
 # Run post-install scripts with proper environment
-RUN COMPOSER_ALLOW_SUPERUSER=1 composer run-script post-install-cmd
+RUN COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader
 
 # Configure Apache
 RUN a2enmod rewrite
