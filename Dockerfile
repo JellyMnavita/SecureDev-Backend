@@ -8,29 +8,32 @@ RUN apt-get update && apt-get install -y \
     unzip \
     libzip-dev \
     libpq-dev \
-    && docker-php-ext-install zip pdo pdo_pgsql
+    && docker-php-ext-install zip pdo pdo_pgsql \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy composer files first
-COPY composer.json composer.lock ./
+# Copy only composer files first (optimize Docker cache)
+COPY composer.json composer.lock symfony.lock ./
 
-# Install PHP dependencies (without scripts)
-RUN composer install --no-dev --no-scripts --optimize-autoloader
-
-# Install Symfony Runtime component
-RUN composer require symfony/runtime --no-scripts
+# Install dependencies without scripts
+RUN composer install --no-dev --no-scripts --no-autoloader --optimize-autoloader
 
 # Copy all files
 COPY . .
 
-# Run post-install scripts with proper environment
-RUN COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader
+# Generate optimized autoloader
+RUN composer dump-autoload --optimize --no-dev
+
+# Execute necessary Symfony commands manually
+RUN php bin/console cache:clear \
+    && php bin/console assets:install public
 
 # Configure Apache
 RUN a2enmod rewrite
 COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
 
 # Set permissions
-RUN chown -R www-data:www-data var
+RUN chown -R www-data:www-data var public
