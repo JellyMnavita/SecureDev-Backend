@@ -1,0 +1,25 @@
+# Étape 1 : image de base PHP avec Composer et extensions nécessaires
+FROM php:8.2-cli
+
+# Installer les dépendances système
+RUN apt-get update && apt-get install -y \
+    git unzip libicu-dev libzip-dev libpng-dev libjpeg-dev libonig-dev libxml2-dev zip \
+    && docker-php-ext-install intl pdo pdo_mysql zip opcache
+
+# Installer Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# Définir le répertoire de travail
+WORKDIR /app
+
+# Copier les fichiers de l'application
+COPY . .
+
+# Installer les dépendances PHP
+RUN composer install --no-dev --optimize-autoloader
+
+# Exposer le port (Render écoute par défaut sur le port 10000)
+EXPOSE 10000
+
+# Commande de démarrage (serveur PHP intégré de Symfony)
+CMD ["php", "-S", "0.0.0.0:10000", "-t", "public"]
