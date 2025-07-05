@@ -24,8 +24,8 @@ Message:
             send_mail(
                 subject=f"[Formulaire Contact] {data.get('subject')}",
                 message=message,
-                from_email="jej042817@gmail.com",
-                recipient_list=["jej042817@gmail.com"],
+                from_email="securedevsolutions280@gmail.com",
+                recipient_list=["securedevsolutions280@gmail.com"],
                 fail_silently=False,
             )
 
